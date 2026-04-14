@@ -5,7 +5,9 @@ description: 'Guide to the Targeter REST API'
 
 ## Welcome to the Targeter API
 
-The Targeter REST API provides trusted third-party partners with programmatic access to our marketing platform. As an approved partner with issued API credentials, you can assist in creation and retrieve marketing campaigns on behalf of your clients.
+The Targeter REST API is the partner-facing HTTP API for Targeter: obtain a JWT and create or resolve campaigns from external systems. As an approved partner with issued API credentials, you can integrate on behalf of your clients.
+
+Current REST API version: **1.1.0**.
 
 ## Base URL
 
@@ -19,11 +21,11 @@ Where `{client_slug}` is your unique client identifier (e.g., `storhaug`).
 
 ## Partner Authentication
 
-The Targeter API uses JWT (JSON Web Token) authentication for trusted third-party partners. Here's how it works:
+The Targeter API uses JWT (JSON Web Token) authentication for trusted third-party partners. Protected routes expect `Authorization: Bearer <token>` (obtain the token from `POST /auth/token`). Here's how it works:
 
 1. **Receive Issued Credentials**: Get your API key and secret issued by the Targeter team for your approved partnership
-2. **Exchange for Token**: Use your issued credentials to get a JWT token from `/auth/token`
-3. **Include in Requests**: Add the token to the `Authorization` header for all API calls
+2. **Exchange for Token**: Use your issued credentials to get a JWT from `/auth/token` (tokens expire after one hour)
+3. **Include in Requests**: Add the token to the `Authorization` header for protected routes
 
 ### Example Partner Authentication Flow
 
@@ -32,8 +34,8 @@ The Targeter API uses JWT (JSON Web Token) authentication for trusted third-part
 curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
   -H "Content-Type: application/json" \
   -d '{
-    "api_key": "YOUR_ISSUED_API_KEY",
-    "api_secret": "YOUR_ISSUED_API_SECRET"
+    "api_key": "YOUR_ISSUED_PARTNER_KEY",
+    "api_secret": "YOUR_ISSUED_PARTNER_SECRET"
   }'
 
 # Step 2: Use token in API calls on behalf of your clients

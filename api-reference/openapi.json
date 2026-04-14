@@ -2,8 +2,8 @@
     "openapi": "3.1.0",
     "info": {
         "title": "Targeter REST API",
-        "description": "API for managing campaigns in the Targeter platform",
-        "version": "1.0.3",
+        "description": "Partner-facing HTTP API for Targeter: obtain a JWT and create or resolve campaigns from external systems.",
+        "version": "1.1.0",
         "contact": {
             "name": "Targeter API Support"
         }
@@ -30,7 +30,7 @@
             "post": {
                 "tags": ["Authentication"],
                 "summary": "Obtain JWT access token",
-                "description": "The partner authentication endpoint allows trusted third-party partners to exchange their issued API credentials for a JWT (JSON Web Token) that can be used to authenticate subsequent API requests on behalf of their clients",
+                "description": "Exchange API credentials for a JWT used as `Authorization: Bearer <token>` on protected routes. Tokens expire after one hour.",
                 "security": [],
                 "requestBody": {
                     "required": true,
@@ -42,12 +42,12 @@
                                 "properties": {
                                     "api_key": {
                                         "type": "string",
-                                        "description": "Your unique API key issued by Targeter for your approved partnership",
+                                        "description": "API key issued for your partnership",
                                         "example": "YOUR_ISSUED_PARTNER_KEY"
                                     },
                                     "api_secret": {
                                         "type": "string",
-                                        "description": "Your secure API secret issued by Targeter for your approved partnership",
+                                        "description": "API secret issued for your partnership",
                                         "example": "YOUR_ISSUED_PARTNER_SECRET"
                                     }
                                 }
@@ -62,20 +62,20 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
+                                    "required": ["access_token", "token_type", "expires_in"],
                                     "properties": {
                                         "access_token": {
                                             "type": "string",
-                                            "description": "JWT token to be used in Authorization header",
+                                            "description": "JWT for the Authorization header",
                                             "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
                                         },
                                         "token_type": {
                                             "type": "string",
-                                            "description": "Token type",
                                             "example": "Bearer"
                                         },
                                         "expires_in": {
                                             "type": "integer",
-                                            "description": "Token validity in seconds",
+                                            "description": "Token lifetime in seconds",
                                             "example": 3600
                                         }
                                     }
@@ -84,7 +84,7 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request payload",
+                        "description": "Invalid request body",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -94,7 +94,7 @@
                         }
                     },
                     "401": {
-                        "description": "Invalid credentials",
+                        "description": "Invalid API credentials",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -119,8 +119,8 @@
         "/campaign": {
             "post": {
                 "tags": ["Campaigns"],
-                "summary": "Create or retrieve campaign",
-                "description": "The campaign endpoint allows trusted third-party partners to provide campaign data to assist in campaign creation on behalf of their clients based on a reference ID. This endpoint handles both initial creation of new campaigns and linking to existing campaigns.\n\n- If no campaign exists for the provided reference_id, the source object gets uploaded and returns HTTP 201 with a link to the new campaign creation flow\n\n- If a campaign already exists for the reference_id, returns HTTP 200 with a direct link to the existing client campaign",
+                "summary": "Create or resolve campaign from external source",
+                "description": "Submit campaign source data keyed by `reference_id`. Requires a valid Bearer token from `/auth/token`.\n\n- If a campaign already exists for `reference_id`, returns **200** with `campaign_link` to that campaign.\n- If no campaign exists, the server stores context (including optional AI extraction) and typically returns **201** with `ad_creation_link` and `campaign_id` (hashed id) when automatic creation succeeds.\n- If automatic creation does not apply or fails, **201** may instead return only `campaign_link` (e.g. prefilled creation flow).\n",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -131,32 +131,33 @@
                                 "properties": {
                                     "source": {
                                         "type": "object",
-                                        "description": "Container for campaign source metadata for your client",
+                                        "description": "Campaign source metadata for the client",
                                         "required": ["material", "name", "reference_id", "target_url"],
                                         "properties": {
                                             "material": {
                                                 "type": "array",
+                                                "minItems": 1,
                                                 "items": {
                                                     "type": "string",
                                                     "format": "uri"
                                                 },
-                                                "description": "One or more URLs to your client's campaign assets (images or video)",
+                                                "description": "URLs to campaign assets (images or video)",
                                                 "example": ["https://client-assets.com/property.jpg"]
                                             },
                                             "name": {
                                                 "type": "string",
-                                                "description": "Campaign name for your client (e.g., property address if the campaign is for real estate)",
+                                                "description": "Campaign display name (e.g. property address)",
                                                 "example": "Majorstuenveien 14"
                                             },
                                             "reference_id": {
                                                 "type": "string",
-                                                "description": "Your external reference for the client's campaign (e.g., estate ID from your system)",
+                                                "description": "Your stable external id for this campaign",
                                                 "example": "CLIENT-PROP-123456"
                                             },
                                             "target_url": {
                                                 "type": "string",
                                                 "format": "uri",
-                                                "description": "Landing page URL for your client's campaign",
+                                                "description": "Landing page URL",
                                                 "example": "https://client-website.no/property/123"
                                             }
                                         }
@@ -180,33 +181,24 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "campaign_link": {
-                                            "type": "string",
-                                            "format": "uri",
-                                            "description": "Link to existing campaign",
-                                            "example": "https://storhaug.targeter.tech/campaigns/AbC123"
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/CampaignResolveExisting"
                                 }
                             }
                         }
                     },
                     "201": {
-                        "description": "Campaign can be created",
+                        "description": "New campaign flow: automatic creation succeeded, or prefilled creation link",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "campaign_link": {
-                                            "type": "string",
-                                            "format": "uri",
-                                            "description": "Link to prefilled campaign creation form",
-                                            "example": "https://storhaug.targeter.tech/campaigns?create=true&source_id=WM-123456"
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/CampaignCreateAuto"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/CampaignResolveNew"
                                         }
-                                    }
+                                    ]
                                 }
                             }
                         }
@@ -219,13 +211,13 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "example": {
-                                    "error": "Missing required field: source.reference_id"
+                                    "error": "Missing required field: source.reference_id: ..."
                                 }
                             }
                         }
                     },
                     "401": {
-                        "description": "Unauthorized - Invalid or expired token",
+                        "description": "Missing Authorization header, or invalid or expired token",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -257,21 +249,58 @@
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "description": "Send as Authorization: Bearer <token>. Token from /api/auth/token"
+                "description": "Use `Authorization: Bearer <token>`. Obtain the token from `POST /auth/token`."
             }
         },
         "schemas": {
+            "CampaignResolveExisting": {
+                "type": "object",
+                "required": ["campaign_link"],
+                "properties": {
+                    "campaign_link": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to the existing campaign in the app"
+                    }
+                }
+            },
+            "CampaignResolveNew": {
+                "type": "object",
+                "required": ["campaign_link"],
+                "properties": {
+                    "campaign_link": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to prefilled campaign creation when automatic creation is not used"
+                    }
+                }
+            },
+            "CampaignCreateAuto": {
+                "type": "object",
+                "required": ["ad_creation_link", "campaign_id"],
+                "properties": {
+                    "ad_creation_link": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to continue ad creation for the new campaign"
+                    },
+                    "campaign_id": {
+                        "type": "string",
+                        "description": "Hashed campaign id (same encoding as in app URLs)"
+                    }
+                }
+            },
             "Error": {
                 "type": "object",
                 "properties": {
                     "error": {
                         "type": "string",
-                        "description": "Error message describing what went wrong",
+                        "description": "Error message",
                         "example": "Missing required field"
                     },
                     "details": {
                         "type": "array",
-                        "description": "Optional validation error details (Zod format)",
+                        "description": "Validation issues (e.g. Zod), when returned by the server",
                         "items": {
                             "type": "object",
                             "properties": {
@@ -280,12 +309,10 @@
                                     "items": {
                                         "type": "string"
                                     },
-                                    "description": "JSON path to the invalid field",
                                     "example": ["source", "reference_id"]
                                 },
                                 "message": {
                                     "type": "string",
-                                    "description": "Human-readable validation message",
                                     "example": "Reference ID is required"
                                 }
                             },

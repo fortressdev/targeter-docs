@@ -1,0 +1,16 @@
+{
+    "name": "targeter-docs",
+    "private": true,
+    "description": "Targeter API documentation (Mintlify)",
+    "engines": {
+        "node": ">=20.17.0 <25.0.0"
+    },
+    "scripts": {
+        "dev": "mintlify dev",
+        "validate": "mintlify validate",
+        "broken-links": "mintlify broken-links"
+    },
+    "devDependencies": {
+        "mintlify": "^4.2.510"
+    }
+}

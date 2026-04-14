@@ -11,7 +11,7 @@ The partner authentication endpoint allows trusted third-party partners to excha
 
 ### Headers
 
--   `Content-Type: application/json`
+- `Content-Type: application/json`
 
 ### Body Parameters
 
@@ -62,23 +62,23 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
 
 ## Error Responses
 
-### 400 - Invalid Request
+### 400 - Invalid request body
 
 ```json
 {
-    "error": "Invalid request payload"
+    "error": "Invalid request body"
 }
 ```
 
-### 401 - Invalid Credentials
+### 401 - Invalid API credentials
 
 ```json
 {
-    "error": "Invalid credentials"
+    "error": "Invalid API credentials"
 }
 ```
 
-### 500 - Server Error
+### 500 - Internal server error
 
 ```json
 {
@@ -88,11 +88,11 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
 
 ## Usage Notes
 
--   **Token Expiration**: JWT tokens expire after 1 hour for security
--   **Refresh**: You must obtain a new token when the current one expires
--   **Security**: Never expose your issued API secret in client-side code - these are for server-to-server communication only
--   **Storage**: Store tokens securely and refresh them before expiration
--   **Credentials**: Only use API credentials issued specifically to your approved partnership
+- **Token Expiration**: JWT tokens expire after 1 hour for security
+- **Refresh**: You must obtain a new token when the current one expires
+- **Security**: Never expose your issued API secret in client-side code - these are for server-to-server communication only
+- **Storage**: Store tokens securely and refresh them before expiration
+- **Credentials**: Only use API credentials issued specifically to your approved partnership
 
 ## Next Steps
 

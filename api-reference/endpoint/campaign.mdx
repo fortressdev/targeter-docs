@@ -5,14 +5,18 @@ openapi: 'POST /campaign'
 
 ## Overview
 
-The campaign endpoint allows trusted third-party partners to provide campaign data to assist in campaign creation on behalf of their clients based on a reference ID. This endpoint handles both initial creation of new campaigns and linking to existing campaigns.
+Submit campaign source data keyed by `reference_id`. Requires a valid Bearer token from [`POST /auth/token`](/api-reference/endpoint/auth).
+
+- If a campaign already exists for `reference_id`, the API returns **200** with `campaign_link` to that campaign.
+- If no campaign exists, the server stores context (including optional AI extraction). **201** typically includes `ad_creation_link` and `campaign_id` (hashed id) when automatic creation succeeds.
+- If automatic creation does not apply or fails, **201** may return only `campaign_link` (for example a prefilled creation flow).
 
 ## Request
 
 ### Headers
 
--   `Authorization: Bearer {jwt_token}` (required - obtained using your issued partner credentials)
--   `Content-Type: application/json`
+- `Authorization: Bearer {jwt_token}` (required - obtained using your issued partner credentials)
+- `Content-Type: application/json`
 
 ### Body Parameters
 
@@ -21,19 +25,19 @@ The campaign endpoint allows trusted third-party partners to provide campaign da
 </ParamField>
 
 <ParamField path="source.material" type="array" required>
-    One or more URLs to your client's campaign assets (images or video)
+    One or more URLs to your client's campaign assets (images or video). Each entry must be a valid URI.
 </ParamField>
 
 <ParamField path="source.name" type="string" required>
-    Campaign name for your client (e.g., property address if the campaign is for real estate)
+    Campaign display name (for example property address)
 </ParamField>
 
 <ParamField path="source.reference_id" type="string" required>
-    Your external reference for the client's campaign (e.g., estate ID from your system)
+    Your stable external id for this campaign
 </ParamField>
 
 <ParamField path="source.target_url" type="string" required>
-    Landing page URL for your client's campaign
+    Landing page URL (URI)
 </ParamField>
 
 ### Example Request
@@ -45,7 +49,7 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
   -d '{
     "source": {
       "material": ["https://client-assets.com/property.jpg"],
-      "name": "Client Property - Majorstuenveien 14",
+      "name": "Majorstuenveien 14",
       "reference_id": "CLIENT-PROP-123456",
       "target_url": "https://client-website.no/property/123"
     }
@@ -54,10 +58,10 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
 
 ## Response
 
-### Success Response (200) - Existing Campaign
+### Success (200) — existing campaign
 
-<ResponseField name="campaign_link" type="string">
-    Link to existing campaign
+<ResponseField name="campaign_link" type="string (uri)">
+    URL to the existing campaign in the app
 </ResponseField>
 
 ```json
@@ -66,10 +70,31 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
 }
 ```
 
-### Success Response (201) - Campaign can be created
+### Success (201) — new campaign flow
 
-<ResponseField name="campaign_link" type="string">
-    Link to prefilled campaign creation form
+The response body is one of:
+
+**Automatic creation succeeded** — includes links to continue ad creation:
+
+<ResponseField name="ad_creation_link" type="string (uri)">
+    URL to continue ad creation for the new campaign
+</ResponseField>
+
+<ResponseField name="campaign_id" type="string">
+    Hashed campaign id (same encoding as in app URLs)
+</ResponseField>
+
+```json
+{
+    "ad_creation_link": "https://storhaug.targeter.tech/...",
+    "campaign_id": "AbC123xyz"
+}
+```
+
+**Prefilled creation (no automatic creation)** — link only:
+
+<ResponseField name="campaign_link" type="string (uri)">
+    URL to prefilled campaign creation when automatic creation is not used
 </ResponseField>
 
 ```json
@@ -80,19 +105,23 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
 
 ## Error Responses
 
-### 400 - Invalid Request
+### 400 - Invalid request payload
 
 ```json
 {
-    "error": "Missing required field: source.reference_id"
+    "error": "Missing required field: source.reference_id: ..."
 }
 ```
 
+Validation errors may include a `details` array with `path` and `message` per field.
+
 ### 401 - Unauthorized
+
+Missing `Authorization` header, or invalid or expired token.
 
 ```json
 {
-    "error": "Unauthorized - Invalid or expired token"
+    "error": "Unauthorized"
 }
 ```
 
@@ -103,19 +132,6 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
     "error": "Unexpected server error. Please try again later."
 }
 ```
-
-## Behavior
-
-### New Campaign Creation for Client
-
--   If no campaign exists for the provided `reference_id`, the source object gets uploaded
--   Returns HTTP 201 with a link to the new campaign creation flow
--   The user will be able to finish the campaign creation
-
-### Existing Campaign Retrieval for Client
-
--   If a campaign already exists for the `reference_id`, returns HTTP 200
--   Provides a direct link to the existing client campaign
 
 ## Partner Usage Examples
 
@@ -147,8 +163,8 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
 
 ## Partner Best Practices
 
--   **Unique Reference IDs**: Use unique, meaningful reference IDs from your system to avoid conflicts
--   **Client Asset URLs**: Ensure all client material URLs are publicly accessible
--   **Client Landing Pages**: Verify that client target URLs are working and relevant
--   **Error Handling**: Always check response status codes and handle errors appropriately
--   **Client Consent**: Ensure you have proper authorization to create campaigns on behalf of your clients
+- **Unique Reference IDs**: Use unique, meaningful reference IDs from your system to avoid conflicts
+- **Client Asset URLs**: Ensure all client material URLs are publicly accessible
+- **Client Landing Pages**: Verify that client target URLs are working and relevant
+- **Error Handling**: Always check response status codes and handle errors appropriately
+- **Client Consent**: Ensure you have proper authorization to create campaigns on behalf of your clients

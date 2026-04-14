@@ -11,19 +11,18 @@ Connect your platform to Targeter and start creating campaigns for your clients.
 
 <AccordionGroup>
     <Accordion icon="key" title="Partner credential issuance">
-        As a trusted third-party partner, you will receive API credentials from Targeter:
-        - **API Key**: Your unique partner identifier issued by Targeter
-        - **API Secret**: Your secure authentication secret issued by Targeter
-        
+        As a trusted third-party partner, you will receive API credentials from Targeter: - **API Key**: Your unique
+        partner identifier issued by Targeter - **API Secret**: Your secure authentication secret issued by Targeter
         These credentials are required for all API requests and are only provided to approved partners.
     </Accordion>
     <Accordion icon="shield-check" title="Understand authentication">
-        Targeter uses JWT (JSON Web Token) authentication for third-party partners:
-        1. Exchange your issued API credentials for a JWT token
-        2. Include the token in the `Authorization` header for all requests
-        3. Tokens expire after 1 hour for security
-        
-        <Tip>Always store your issued API secret securely and never expose it in client-side code. These credentials are for server-to-server communication only.</Tip>
+        Targeter uses JWT (JSON Web Token) authentication for third-party partners: 1. Exchange your issued API
+        credentials for a JWT token 2. Include the token in the `Authorization` header for protected routes 3. Tokens
+        expire after 1 hour for security
+        <Tip>
+            Always store your issued API secret securely and never expose it in client-side code. These credentials are
+            for server-to-server communication only.
+        </Tip>
     </Accordion>
 </AccordionGroup>
 
@@ -37,8 +36,8 @@ Connect your platform to Targeter and start creating campaigns for your clients.
 curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
   -H "Content-Type: application/json" \
   -d '{
-    "api_key": "YOUR_ISSUED_API_KEY",
-    "api_secret": "YOUR_ISSUED_API_SECRET"
+    "api_key": "YOUR_ISSUED_PARTNER_KEY",
+    "api_secret": "YOUR_ISSUED_PARTNER_SECRET"
   }'
 ```
 
@@ -70,11 +69,14 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
   }'
 ```
 
-Response:
+Depending on whether a campaign already exists and whether automatic creation applies, you may get **200** with `campaign_link`, or **201** with either `ad_creation_link` and `campaign_id`, or `campaign_link` only. See [Campaigns](/api-reference/endpoint/campaign).
+
+Example **201** when automatic creation succeeds:
 
 ```json
 {
-    "campaign_link": "https://storhaug.targeter.tech/campaigns?create=true&source_id=CLIENT-PROP-001"
+    "ad_creation_link": "https://storhaug.targeter.tech/...",
+    "campaign_id": "AbC123xyz"
 }
 ```
 
@@ -85,10 +87,11 @@ Response:
 
 <Accordion icon="book-open" title="Explore the full API">
     Now that you've made your first integration call, explore our complete partner API reference:
-    
-    - **[Authentication](/api-reference/endpoint/auth)** - Learn about JWT tokens and partner security
-    - **[Campaign Management](/api-reference/endpoint/campaign)** - Create and manage campaigns for your clients
-    - **[API Introduction](/api-reference/introduction)** - Overview of all available partner endpoints
+
+    - **[Authentication](/api-reference/endpoint/auth)** — JWT tokens and partner security
+    - **[Campaign Management](/api-reference/endpoint/campaign)** — Create or resolve campaigns for your clients
+    - **[API Introduction](/api-reference/introduction)** — Overview of all available partner endpoints
+
 </Accordion>
 
 ## Next steps
@@ -116,5 +119,6 @@ Ready to complete your Targeter integration? Here's what you can do next:
 </CardGroup>
 
 <Note>
-    **Need integration help?** Contact our partner support team at [support@targeter.tech](mailto:support@targeter.tech) for assistance with your third-party integration or any questions.
+    **Need integration help?** Contact our partner support team at [support@targeter.tech](mailto:support@targeter.tech)
+    for assistance with your third-party integration or any questions.
 </Note>
