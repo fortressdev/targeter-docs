@@ -132,18 +132,8 @@
                                     "source": {
                                         "type": "object",
                                         "description": "Campaign source metadata for the client",
-                                        "required": ["material", "name", "reference_id", "target_url"],
+                                        "required": ["name", "reference_id", "destination_url"],
                                         "properties": {
-                                            "material": {
-                                                "type": "array",
-                                                "minItems": 1,
-                                                "items": {
-                                                    "type": "string",
-                                                    "format": "uri"
-                                                },
-                                                "description": "URLs to campaign assets (images or video)",
-                                                "example": ["https://client-assets.com/property.jpg"]
-                                            },
                                             "name": {
                                                 "type": "string",
                                                 "description": "Campaign display name (e.g. property address)",
@@ -154,22 +144,26 @@
                                                 "description": "Your stable external id for this campaign",
                                                 "example": "CLIENT-PROP-123456"
                                             },
-                                            "target_url": {
+                                            "destination_url": {
                                                 "type": "string",
                                                 "format": "uri",
                                                 "description": "Landing page URL",
                                                 "example": "https://client-website.no/property/123"
                                             }
+                                        },
+                                        "example": {
+                                            "name": "Majorstuenveien 14",
+                                            "reference_id": "CLIENT-PROP-123456",
+                                            "destination_url": "https://client-website.no/property/123"
                                         }
                                     }
                                 }
                             },
                             "example": {
                                 "source": {
-                                    "material": ["https://client-assets.com/property.jpg"],
                                     "name": "Majorstuenveien 14",
                                     "reference_id": "CLIENT-PROP-123456",
-                                    "target_url": "https://client-website.no/property/123"
+                                    "destination_url": "https://client-website.no/property/123"
                                 }
                             }
                         }
@@ -259,6 +253,35 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/CampaignGetResponse"
+                                },
+                                "example": {
+                                    "campaign": {
+                                        "id": "AbC123xyz",
+                                        "name": "Majorstuenveien 14",
+                                        "reference_id": "CLIENT-PROP-123456",
+                                        "destination_url": "https://client-website.no/property/123",
+                                        "status": "active"
+                                    },
+                                    "stats": {
+                                        "impressions": 12500,
+                                        "clicks": 340,
+                                        "cpm": 120.0,
+                                        "cpc": 4.41,
+                                        "ctr": 0.0272,
+                                        "reach": 8200,
+                                        "frequency": 1.52,
+                                        "conversion": 28,
+                                        "cost_per_conversion": 53.57,
+                                        "video_views": {
+                                            "p25": 5469,
+                                            "p50": 4031,
+                                            "p75": 2472,
+                                            "p100": 1031
+                                        },
+                                        "from_date": "2025-01-01",
+                                        "to_date": "2025-01-31"
+                                    },
+                                    "href": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
                                 }
                             }
                         }
@@ -334,11 +357,40 @@
                         "description": "URL to the campaign in the Targeter app",
                         "example": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
                     }
+                },
+                "example": {
+                    "campaign": {
+                        "id": "AbC123xyz",
+                        "name": "Majorstuenveien 14",
+                        "reference_id": "CLIENT-PROP-123456",
+                        "destination_url": "https://client-website.no/property/123",
+                        "status": "active"
+                    },
+                    "stats": {
+                        "impressions": 12500,
+                        "clicks": 340,
+                        "cpm": 120.0,
+                        "cpc": 4.41,
+                        "ctr": 0.0272,
+                        "reach": 8200,
+                        "frequency": 1.52,
+                        "conversion": 28,
+                        "cost_per_conversion": 53.57,
+                        "video_views": {
+                            "p25": 5469,
+                            "p50": 4031,
+                            "p75": 2472,
+                            "p100": 1031
+                        },
+                        "from_date": "2025-01-01",
+                        "to_date": "2025-01-31"
+                    },
+                    "href": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
                 }
             },
             "Campaign": {
                 "type": "object",
-                "required": ["id", "name", "reference_id", "target_url"],
+                "required": ["id", "name", "reference_id", "destination_url"],
                 "properties": {
                     "id": {
                         "type": "string",
@@ -355,25 +407,65 @@
                         "description": "External reference id from the partner system",
                         "example": "CLIENT-PROP-123456"
                     },
-                    "target_url": {
+                    "destination_url": {
                         "type": "string",
                         "format": "uri",
                         "description": "Landing page URL",
                         "example": "https://client-website.no/property/123"
                     },
-                    "material": {
-                        "type": "array",
-                        "items": {
-                            "type": "string",
-                            "format": "uri"
-                        },
-                        "description": "URLs to campaign assets (images or video)"
-                    },
                     "status": {
                         "type": "string",
                         "description": "Campaign status",
+                        "enum": [
+                            "draft",
+                            "setup",
+                            "setup_failed",
+                            "ready",
+                            "scheduled",
+                            "active",
+                            "paused",
+                            "completed"
+                        ],
                         "example": "active"
                     }
+                },
+                "example": {
+                    "id": "AbC123xyz",
+                    "name": "Majorstuenveien 14",
+                    "reference_id": "CLIENT-PROP-123456",
+                    "destination_url": "https://client-website.no/property/123",
+                    "status": "active"
+                }
+            },
+            "VideoViewQuartiles": {
+                "type": "object",
+                "properties": {
+                    "p25": {
+                        "type": "integer",
+                        "description": "Video views at 25% completion",
+                        "example": 5469
+                    },
+                    "p50": {
+                        "type": "integer",
+                        "description": "Video views at 50% completion",
+                        "example": 4031
+                    },
+                    "p75": {
+                        "type": "integer",
+                        "description": "Video views at 75% completion",
+                        "example": 2472
+                    },
+                    "p100": {
+                        "type": "integer",
+                        "description": "Video views at 100% completion",
+                        "example": 1031
+                    }
+                },
+                "example": {
+                    "p25": 5469,
+                    "p50": 4031,
+                    "p75": 2472,
+                    "p100": 1031
                 }
             },
             "CampaignStats": {
@@ -389,21 +481,75 @@
                         "description": "Total ad clicks",
                         "example": 340
                     },
-                    "reach": {
-                        "type": "integer",
-                        "description": "Unique people reached",
-                        "example": 8200
-                    },
-                    "spend": {
+                    "cpm": {
                         "type": "number",
-                        "description": "Total spend in the campaign currency",
-                        "example": 1500.0
+                        "description": "Cost per mille (cost per 1,000 impressions)",
+                        "example": 120.0
+                    },
+                    "cpc": {
+                        "type": "number",
+                        "description": "Cost per click",
+                        "example": 4.41
                     },
                     "ctr": {
                         "type": "number",
                         "description": "Click-through rate (clicks / impressions)",
                         "example": 0.0272
+                    },
+                    "reach": {
+                        "type": "integer",
+                        "description": "Unique people reached",
+                        "example": 8200
+                    },
+                    "frequency": {
+                        "type": "number",
+                        "description": "Average impressions per person reached",
+                        "example": 1.52
+                    },
+                    "conversion": {
+                        "type": "integer",
+                        "description": "Total conversions",
+                        "example": 28
+                    },
+                    "cost_per_conversion": {
+                        "type": "number",
+                        "description": "Average cost per conversion",
+                        "example": 53.57
+                    },
+                    "video_views": {
+                        "$ref": "#/components/schemas/VideoViewQuartiles"
+                    },
+                    "from_date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Start date of the stats period (inclusive)",
+                        "example": "2025-01-01"
+                    },
+                    "to_date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "End date of the stats period (inclusive)",
+                        "example": "2025-01-31"
                     }
+                },
+                "example": {
+                    "impressions": 12500,
+                    "clicks": 340,
+                    "cpm": 120.0,
+                    "cpc": 4.41,
+                    "ctr": 0.0272,
+                    "reach": 8200,
+                    "frequency": 1.52,
+                    "conversion": 28,
+                    "cost_per_conversion": 53.57,
+                    "video_views": {
+                        "p25": 5469,
+                        "p50": 4031,
+                        "p75": 2472,
+                        "p100": 1031
+                    },
+                    "from_date": "2025-01-01",
+                    "to_date": "2025-01-31"
                 }
             },
             "Error": {

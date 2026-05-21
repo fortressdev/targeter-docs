@@ -61,10 +61,9 @@ curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
   -H "Content-Type: application/json" \
   -d '{
     "source": {
-      "material": ["https://client-assets.com/property.jpg"],
       "name": "Client Property Campaign",
       "reference_id": "CLIENT-PROP-001",
-      "target_url": "https://client-site.com/property/001"
+      "destination_url": "https://client-site.com/property/001"
     }
   }'
 ```

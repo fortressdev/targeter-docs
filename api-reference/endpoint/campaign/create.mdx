@@ -26,10 +26,6 @@ Use the returned `id` with [`GET /campaign`](/api-reference/endpoint/campaign/ge
     Container for campaign source metadata for your client
 </ParamField>
 
-<ParamField path="source.material" type="array" required>
-    One or more URLs to your client's campaign assets (images or video). Each entry must be a valid URI.
-</ParamField>
-
 <ParamField path="source.name" type="string" required>
     Campaign display name (for example property address)
 </ParamField>
@@ -38,7 +34,7 @@ Use the returned `id` with [`GET /campaign`](/api-reference/endpoint/campaign/ge
     Your stable external id for this campaign
 </ParamField>
 
-<ParamField path="source.target_url" type="string" required>
+<ParamField path="source.destination_url" type="string" required>
     Landing page URL (URI)
 </ParamField>
 
@@ -50,10 +46,9 @@ curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
   -H "Content-Type: application/json" \
   -d '{
     "source": {
-      "material": ["https://client-assets.com/property.jpg"],
       "name": "Majorstuenveien 14",
       "reference_id": "CLIENT-PROP-123456",
-      "target_url": "https://client-website.no/property/123"
+      "destination_url": "https://client-website.no/property/123"
     }
   }'
 ```
@@ -109,10 +104,9 @@ Missing `Authorization` header, or invalid or expired token.
 ```json
 {
     "source": {
-        "material": ["https://cdn.megler.no/bilde1.jpg", "https://cdn.megler.no/bilde2.jpg"],
         "name": "Ivan Bjørndals Gate 9",
         "reference_id": "123-456-789",
-        "target_url": "https://megler.no/eiendom/123"
+        "destination_url": "https://megler.no/eiendom/123"
     }
 }
 ```
@@ -122,10 +116,9 @@ Missing `Authorization` header, or invalid or expired token.
 ```json
 {
     "source": {
-        "material": ["https://cdn.megler.no/video.mp4"],
         "name": "Sommerkampanje Torshov",
         "reference_id": "TORSHOV-SUMMER-01012025-123",
-        "target_url": "https://megler.no/kontor/torshov"
+        "destination_url": "https://megler.no/kontor/torshov"
     }
 }
 ```
@@ -133,7 +126,6 @@ Missing `Authorization` header, or invalid or expired token.
 ## Partner Best Practices
 
 - **Unique Reference IDs**: Use unique, meaningful reference IDs from your system to avoid conflicts
-- **Client Asset URLs**: Ensure all client material URLs are publicly accessible
-- **Client Landing Pages**: Verify that client target URLs are working and relevant
+- **Client Landing Pages**: Verify that client destination URLs are working and relevant
 - **Error Handling**: Always check response status codes and handle errors appropriately
 - **Client Consent**: Ensure you have proper authorization to create campaigns on behalf of your clients

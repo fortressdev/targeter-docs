@@ -34,11 +34,13 @@ curl "https://storhaug.targeter.tech/api/campaign?id=AbC123xyz" \
 ### Success (200)
 
 <ResponseField name="campaign" type="object">
-    Campaign details including `id`, `name`, `reference_id`, `target_url`, `material`, and `status`
+    Campaign details including `id`, `name`, `reference_id`, `destination_url`, and `status` (`draft`, `setup`,
+    `setup_failed`, `ready`, `scheduled`, `active`, `paused`, or `completed`)
 </ResponseField>
 
 <ResponseField name="stats" type="object">
-    Performance metrics such as `impressions`, `clicks`, `reach`, `spend`, and `ctr`
+    Performance metrics including `impressions`, `clicks`, `cpm`, `cpc`, `ctr`, `reach`, `frequency`, `conversion`,
+    `cost_per_conversion`, `video_views`, `from_date`, and `to_date`
 </ResponseField>
 
 <ResponseField name="href" type="string (uri)">
@@ -51,16 +53,27 @@ curl "https://storhaug.targeter.tech/api/campaign?id=AbC123xyz" \
         "id": "AbC123xyz",
         "name": "Majorstuenveien 14",
         "reference_id": "CLIENT-PROP-123456",
-        "target_url": "https://client-website.no/property/123",
-        "material": ["https://client-assets.com/property.jpg"],
+        "destination_url": "https://client-website.no/property/123",
         "status": "active"
     },
     "stats": {
         "impressions": 12500,
         "clicks": 340,
+        "cpm": 120.0,
+        "cpc": 4.41,
+        "ctr": 0.0272,
         "reach": 8200,
-        "spend": 1500.0,
-        "ctr": 0.0272
+        "frequency": 1.52,
+        "conversion": 28,
+        "cost_per_conversion": 53.57,
+        "video_views": {
+            "p25": 5469,
+            "p50": 4031,
+            "p75": 2472,
+            "p100": 1031
+        },
+        "from_date": "2025-01-01",
+        "to_date": "2025-01-31"
     },
     "href": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
 }
