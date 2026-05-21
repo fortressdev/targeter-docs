@@ -38,7 +38,7 @@ Older global or cached CLIs looked for `mint.json`. This project uses the curren
 ## API Endpoints
 
 - **Authentication**: `POST /auth/token` — obtain JWT tokens
-- **Campaigns**: `POST /campaign` — create or resolve campaigns
+- **Campaigns**: `POST /campaigns` — create or resolve campaigns; `GET /campaign` — fetch campaign and stats
 
 ## Publishing Changes
 

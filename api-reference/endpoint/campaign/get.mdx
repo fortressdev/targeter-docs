@@ -1,0 +1,95 @@
+---
+title: 'Get campaign'
+description: 'Fetch a campaign, its performance stats, and app link'
+openapi: 'GET /campaign'
+---
+
+## Overview
+
+Returns the campaign, its performance stats, and an `href` to the campaign in the Targeter app. Requires a valid Bearer token from [`POST /auth/token`](/api-reference/endpoint/auth).
+
+Use the `id` returned from [`POST /campaigns`](/api-reference/endpoint/campaign/create) as the query parameter.
+
+## Request
+
+### Headers
+
+- `Authorization: Bearer {jwt_token}` (required - obtained using your issued partner credentials)
+
+### Query Parameters
+
+<ParamField query="id" type="string" required>
+    Campaign id returned from `POST /campaigns`
+</ParamField>
+
+### Example Request
+
+```bash
+curl "https://storhaug.targeter.tech/api/campaign?id=AbC123xyz" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+## Response
+
+### Success (200)
+
+<ResponseField name="campaign" type="object">
+    Campaign details including `id`, `name`, `reference_id`, `target_url`, `material`, and `status`
+</ResponseField>
+
+<ResponseField name="stats" type="object">
+    Performance metrics such as `impressions`, `clicks`, `reach`, `spend`, and `ctr`
+</ResponseField>
+
+<ResponseField name="href" type="string (uri)">
+    URL to the campaign in the Targeter app (`https://{tenant}.targeter.tech/campaigns/{id}`)
+</ResponseField>
+
+```json
+{
+    "campaign": {
+        "id": "AbC123xyz",
+        "name": "Majorstuenveien 14",
+        "reference_id": "CLIENT-PROP-123456",
+        "target_url": "https://client-website.no/property/123",
+        "material": ["https://client-assets.com/property.jpg"],
+        "status": "active"
+    },
+    "stats": {
+        "impressions": 12500,
+        "clicks": 340,
+        "reach": 8200,
+        "spend": 1500.0,
+        "ctr": 0.0272
+    },
+    "href": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
+}
+```
+
+## Error Responses
+
+### 401 - Unauthorized
+
+Missing `Authorization` header, or invalid or expired token.
+
+```json
+{
+    "error": "Unauthorized"
+}
+```
+
+### 404 - Campaign not found
+
+```json
+{
+    "error": "Campaign not found"
+}
+```
+
+### 500 - Server Error
+
+```json
+{
+    "error": "Unexpected server error. Please try again later."
+}
+```

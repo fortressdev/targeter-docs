@@ -56,7 +56,7 @@ Response:
     Now create a campaign on behalf of your client using your JWT token:
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/campaign" \
+curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -69,14 +69,13 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
   }'
 ```
 
-Depending on whether a campaign already exists and whether automatic creation applies, you may get **200** with `campaign_link`, or **201** with either `ad_creation_link` and `campaign_id`, or `campaign_link` only. See [Campaigns](/api-reference/endpoint/campaign).
+Depending on whether a campaign already exists, you get **200** or **201** with an `id`. Use [`GET /campaign`](/api-reference/endpoint/campaign/get) to fetch the campaign, stats, and app link. See [Create campaign](/api-reference/endpoint/campaign/create).
 
 Example **201** when automatic creation succeeds:
 
 ```json
 {
-    "ad_creation_link": "https://storhaug.targeter.tech/...",
-    "campaign_id": "AbC123xyz"
+    "id": "AbC123xyz"
 }
 ```
 
@@ -89,7 +88,8 @@ Example **201** when automatic creation succeeds:
     Now that you've made your first integration call, explore our complete partner API reference:
 
     - **[Authentication](/api-reference/endpoint/auth)** — JWT tokens and partner security
-    - **[Campaign Management](/api-reference/endpoint/campaign)** — Create or resolve campaigns for your clients
+    - **[Create campaign](/api-reference/endpoint/campaign/create)** — Create or resolve campaigns for your clients
+    - **[Get campaign](/api-reference/endpoint/campaign/get)** — Fetch campaign details and stats
     - **[API Introduction](/api-reference/introduction)** — Overview of all available partner endpoints
 
 </Accordion>
@@ -104,8 +104,12 @@ Ready to complete your Targeter integration? Here's what you can do next:
     Learn about JWT authentication and security best practices for partners.
 </Card>
 
-<Card title="Campaign API" icon="bullseye" href="/api-reference/endpoint/campaign">
-    Create and manage targeted marketing campaigns for your clients.
+<Card title="Create campaign" icon="bullseye" href="/api-reference/endpoint/campaign/create">
+    Create and resolve targeted marketing campaigns for your clients.
+</Card>
+
+<Card title="Get campaign" icon="chart-line" href="/api-reference/endpoint/campaign/get">
+    Fetch campaign details, stats, and app links.
 </Card>
 
 <Card title="Partner API Reference" icon="book-open" href="/api-reference/introduction">

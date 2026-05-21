@@ -1,15 +1,17 @@
 ---
-title: 'Campaigns'
-openapi: 'POST /campaign'
+title: 'Create campaign'
+description: 'Create or resolve a campaign from external source data'
+openapi: 'POST /campaigns'
 ---
 
 ## Overview
 
 Submit campaign source data keyed by `reference_id`. Requires a valid Bearer token from [`POST /auth/token`](/api-reference/endpoint/auth).
 
-- If a campaign already exists for `reference_id`, the API returns **200** with `campaign_link` to that campaign.
-- If no campaign exists, the server stores context (including optional AI extraction). **201** typically includes `ad_creation_link` and `campaign_id` (hashed id) when automatic creation succeeds.
-- If automatic creation does not apply or fails, **201** may return only `campaign_link` (for example a prefilled creation flow).
+- If a campaign already exists for `reference_id`, the API returns **200** with the campaign `id`.
+- If no campaign exists, the server stores context (including optional AI extraction) and returns **201** with the new campaign `id`.
+
+Use the returned `id` with [`GET /campaign`](/api-reference/endpoint/campaign/get) to fetch the campaign, its stats, and an app link.
 
 ## Request
 
@@ -43,7 +45,7 @@ Submit campaign source data keyed by `reference_id`. Requires a valid Bearer tok
 ### Example Request
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/campaign" \
+curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -58,48 +60,15 @@ curl -X POST "https://storhaug.targeter.tech/api/campaign" \
 
 ## Response
 
-### Success (200) — existing campaign
+### Success (200 or 201)
 
-<ResponseField name="campaign_link" type="string (uri)">
-    URL to the existing campaign in the app
+<ResponseField name="id" type="string">
+    Campaign id (hashed id, same encoding as in app URLs)
 </ResponseField>
 
 ```json
 {
-    "campaign_link": "https://storhaug.targeter.tech/campaigns/AbC123"
-}
-```
-
-### Success (201) — new campaign flow
-
-The response body is one of:
-
-**Automatic creation succeeded** — includes links to continue ad creation:
-
-<ResponseField name="ad_creation_link" type="string (uri)">
-    URL to continue ad creation for the new campaign
-</ResponseField>
-
-<ResponseField name="campaign_id" type="string">
-    Hashed campaign id (same encoding as in app URLs)
-</ResponseField>
-
-```json
-{
-    "ad_creation_link": "https://storhaug.targeter.tech/...",
-    "campaign_id": "AbC123xyz"
-}
-```
-
-**Prefilled creation (no automatic creation)** — link only:
-
-<ResponseField name="campaign_link" type="string (uri)">
-    URL to prefilled campaign creation when automatic creation is not used
-</ResponseField>
-
-```json
-{
-    "campaign_link": "https://storhaug.targeter.tech/campaigns?create=true&source_id=WM-123456"
+    "id": "AbC123xyz"
 }
 ```
 

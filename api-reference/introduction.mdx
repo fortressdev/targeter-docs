@@ -39,7 +39,7 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
   }'
 
 # Step 2: Use token in API calls on behalf of your clients
-curl -X POST "https://storhaug.targeter.tech/api/campaign" \
+curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ ... }'

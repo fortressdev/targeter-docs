@@ -99,7 +99,7 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
 Once you have your JWT token, you can use it to make authenticated requests on behalf of your clients:
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/campaign" \
+curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ ... }'
