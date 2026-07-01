@@ -7,23 +7,23 @@ description: 'Guide to the Targeter REST API'
 
 The Targeter REST API is the partner-facing HTTP API for Targeter: obtain a JWT and create or resolve campaigns from external systems. As an approved partner with issued API credentials, you can integrate on behalf of your clients.
 
-Current REST API version: **1.1.0**.
+Current REST API version: **1.2.0**.
 
 ## Base URL
 
-All API requests are made to your client-specific endpoint:
+All API requests are made to the base URL provided with your credentials:
 
 ```
-https://{client_slug}.targeter.tech/api
+https://app.targeter.tech/api
 ```
 
-Where `{client_slug}` is your unique client identifier (e.g., `storhaug`).
+Some clients use a tenant-specific host (e.g. `https://{client_slug}.targeter.tech/api`). Use the base URL you received from Targeter.
 
 ## Partner Authentication
 
 The Targeter API uses JWT (JSON Web Token) authentication for trusted third-party partners. Protected routes expect `Authorization: Bearer <token>` (obtain the token from `POST /auth/token`). Here's how it works:
 
-1. **Receive Issued Credentials**: Get your API key and secret issued by the Targeter team for your approved partnership
+1. **Receive Issued Credentials**: Get your API key and plain-text secret issued by the Targeter team for your approved partnership
 2. **Exchange for Token**: Use your issued credentials to get a JWT from `/auth/token` (tokens expire after one hour)
 3. **Include in Requests**: Add the token to the `Authorization` header for protected routes
 
@@ -31,7 +31,7 @@ The Targeter API uses JWT (JSON Web Token) authentication for trusted third-part
 
 ```bash
 # Step 1: Get JWT token using your issued credentials
-curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
+curl -X POST "https://app.targeter.tech/api/auth/token" \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_ISSUED_PARTNER_KEY",
@@ -39,10 +39,17 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
   }'
 
 # Step 2: Use token in API calls on behalf of your clients
-curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
+curl -X POST "https://app.targeter.tech/api/campaign" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{ ... }'
+  -d '{
+    "source": {
+      "material": ["https://example.com/image.jpg"],
+      "name": "Example Campaign",
+      "reference_id": "REF-001",
+      "target_url": "https://example.com/listing/001"
+    }
+  }'
 ```
 
 ## Rate Limits
@@ -55,11 +62,19 @@ The API uses standard HTTP status codes and returns detailed error information:
 
 ```json
 {
-    "error": "Missing required field: source.reference_id",
+    "error": "Missing required field: source.reference_id: Reference ID is required"
+}
+```
+
+Validation errors on authentication may include a `details` array:
+
+```json
+{
+    "error": "Invalid request payload",
     "details": [
         {
-            "path": ["source", "reference_id"],
-            "message": "Reference ID is required"
+            "path": ["api_key"],
+            "message": "Invalid input: expected string, received undefined"
         }
     ]
 }

@@ -11,17 +11,23 @@ Connect your platform to Targeter and start creating campaigns for your clients.
 
 <AccordionGroup>
     <Accordion icon="key" title="Partner credential issuance">
-        As a trusted third-party partner, you will receive API credentials from Targeter: - **API Key**: Your unique
-        partner identifier issued by Targeter - **API Secret**: Your secure authentication secret issued by Targeter
+        As a trusted third-party partner, you will receive API credentials from Targeter:
+
+        - **API Key**: Your unique partner identifier issued by Targeter
+        - **API Secret**: Your plain-text authentication secret issued by Targeter
+        - **Base URL**: The API host for your integration (e.g. `https://app.targeter.tech/api`)
+
         These credentials are required for all API requests and are only provided to approved partners.
     </Accordion>
     <Accordion icon="shield-check" title="Understand authentication">
-        Targeter uses JWT (JSON Web Token) authentication for third-party partners: 1. Exchange your issued API
-        credentials for a JWT token 2. Include the token in the `Authorization` header for protected routes 3. Tokens
-        expire after 1 hour for security
+        Targeter uses JWT (JSON Web Token) authentication for third-party partners:
+
+        1. Exchange your issued API credentials for a JWT token
+        2. Include the token in the `Authorization` header for protected routes
+        3. Tokens expire after 1 hour for security
+
         <Tip>
-            Always store your issued API secret securely and never expose it in client-side code. These credentials are
-            for server-to-server communication only.
+            Send the plain-text secret in `api_secret` — not a bcrypt hash. Always store your issued API secret securely and never expose it in client-side code. These credentials are for server-to-server communication only.
         </Tip>
     </Accordion>
 </AccordionGroup>
@@ -33,7 +39,7 @@ Connect your platform to Targeter and start creating campaigns for your clients.
     Start by obtaining a JWT token using your partner credentials:
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
+curl -X POST "https://app.targeter.tech/api/auth/token" \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_ISSUED_PARTNER_KEY",
@@ -56,25 +62,29 @@ Response:
     Now create a campaign on behalf of your client using your JWT token:
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
+curl -X POST "https://app.targeter.tech/api/campaign" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "source": {
+      "material": [
+        "https://example.com/property-photo.jpg"
+      ],
       "name": "Client Property Campaign",
       "reference_id": "CLIENT-PROP-001",
-      "destination_url": "https://client-site.com/property/001"
+      "target_url": "https://client-site.com/property/001"
     }
   }'
 ```
 
-Depending on whether a campaign already exists, you get **200** or **201** with an `id`. Use [`GET /campaign`](/api-reference/endpoint/campaign/get) to fetch the campaign, stats, and app link. See [Create campaign](/api-reference/endpoint/campaign/create).
+Depending on whether a campaign already exists, you get **200** or **201** with a `campaign_link`. New campaigns also include `campaign_id`. Use [`GET /campaign`](/api-reference/endpoint/campaign/get) to fetch the campaign, stats, and app link. See [Create campaign](/api-reference/endpoint/campaign/create).
 
 Example **201** when automatic creation succeeds:
 
 ```json
 {
-    "id": "AbC123xyz"
+    "campaign_link": "https://app.targeter.tech/campaigns/AbC123xyz",
+    "campaign_id": "AbC123xyz"
 }
 ```
 

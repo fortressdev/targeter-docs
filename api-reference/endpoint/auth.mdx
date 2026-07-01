@@ -20,19 +20,21 @@ The partner authentication endpoint allows trusted third-party partners to excha
 </ParamField>
 
 <ParamField path="api_secret" type="string" required>
-    Your secure API secret issued by Targeter for your approved partnership
+    Your plain-text API secret issued by Targeter. Send the secret exactly as provided — not a bcrypt hash or other encoded form.
 </ParamField>
 
 ### Example Request
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
+curl -X POST "https://app.targeter.tech/api/auth/token" \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_ISSUED_PARTNER_KEY",
     "api_secret": "YOUR_ISSUED_PARTNER_SECRET"
   }'
 ```
+
+Use snake_case field names (`api_key`, `api_secret`). CamelCase names such as `apiKey` return **400**.
 
 ## Response
 
@@ -62,11 +64,17 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
 
 ## Error Responses
 
-### 400 - Invalid request body
+### 400 - Invalid request payload
 
 ```json
 {
-    "error": "Invalid request body"
+    "error": "Invalid request payload",
+    "details": [
+        {
+            "path": ["api_key"],
+            "message": "Invalid input: expected string, received undefined"
+        }
+    ]
 }
 ```
 
@@ -90,16 +98,17 @@ curl -X POST "https://storhaug.targeter.tech/api/auth/token" \
 
 - **Token Expiration**: JWT tokens expire after 1 hour for security
 - **Refresh**: You must obtain a new token when the current one expires
-- **Security**: Never expose your issued API secret in client-side code - these are for server-to-server communication only
+- **Security**: Never expose your issued API secret in client-side code — these are for server-to-server communication only
 - **Storage**: Store tokens securely and refresh them before expiration
 - **Credentials**: Only use API credentials issued specifically to your approved partnership
+- **Base URL**: Your API base URL is provided with your credentials (e.g. `https://app.targeter.tech/api`)
 
 ## Next Steps
 
 Once you have your JWT token, you can use it to make authenticated requests on behalf of your clients:
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
+curl -X POST "https://app.targeter.tech/api/campaign" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ ... }'

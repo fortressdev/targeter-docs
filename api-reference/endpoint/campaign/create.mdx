@@ -1,29 +1,33 @@
 ---
 title: 'Create campaign'
 description: 'Create or resolve a campaign from external source data'
-openapi: 'POST /campaigns'
+openapi: 'POST /campaign'
 ---
 
 ## Overview
 
 Submit campaign source data keyed by `reference_id`. Requires a valid Bearer token from [`POST /auth/token`](/api-reference/endpoint/auth).
 
-- If a campaign already exists for `reference_id`, the API returns **200** with the campaign `id`.
-- If no campaign exists, the server stores context (including optional AI extraction) and returns **201** with the new campaign `id`.
+- If a campaign already exists for `reference_id`, the API returns **200** with `campaign_link`.
+- If no campaign exists, the server stores context (including optional AI extraction), creates the campaign, and returns **201** with `campaign_link` and `campaign_id`.
 
-Use the returned `id` with [`GET /campaign`](/api-reference/endpoint/campaign/get) to fetch the campaign, its stats, and an app link.
+Use `campaign_id` with [`GET /campaign`](/api-reference/endpoint/campaign/get) to fetch the campaign, its stats, and an app link.
 
 ## Request
 
 ### Headers
 
-- `Authorization: Bearer {jwt_token}` (required - obtained using your issued partner credentials)
+- `Authorization: Bearer {jwt_token}` (required — obtained using your issued partner credentials)
 - `Content-Type: application/json`
 
 ### Body Parameters
 
 <ParamField path="source" type="object" required>
     Container for campaign source metadata for your client
+</ParamField>
+
+<ParamField path="source.material" type="string[]" required>
+    Image URLs for the campaign (at least one required)
 </ParamField>
 
 <ParamField path="source.name" type="string" required>
@@ -34,36 +38,56 @@ Use the returned `id` with [`GET /campaign`](/api-reference/endpoint/campaign/ge
     Your stable external id for this campaign
 </ParamField>
 
-<ParamField path="source.destination_url" type="string" required>
+<ParamField path="source.target_url" type="string" required>
     Landing page URL (URI)
 </ParamField>
 
 ### Example Request
 
 ```bash
-curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
+curl -X POST "https://app.targeter.tech/api/campaign" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "source": {
+      "material": [
+        "https://example.com/image1.jpg"
+      ],
       "name": "Majorstuenveien 14",
       "reference_id": "CLIENT-PROP-123456",
-      "destination_url": "https://client-website.no/property/123"
+      "target_url": "https://client-website.no/property/123"
     }
   }'
 ```
 
 ## Response
 
-### Success (200 or 201)
+### Success (201 — new campaign)
 
-<ResponseField name="id" type="string">
+<ResponseField name="campaign_link" type="string">
+    URL to the campaign in the Targeter app
+</ResponseField>
+
+<ResponseField name="campaign_id" type="string">
     Campaign id (hashed id, same encoding as in app URLs)
 </ResponseField>
 
 ```json
 {
-    "id": "AbC123xyz"
+    "campaign_link": "https://app.targeter.tech/campaigns/AbC123xyz",
+    "campaign_id": "AbC123xyz"
+}
+```
+
+### Success (200 — existing campaign)
+
+<ResponseField name="campaign_link" type="string">
+    URL to the existing campaign in the Targeter app
+</ResponseField>
+
+```json
+{
+    "campaign_link": "https://app.targeter.tech/campaigns/AbC123xyz"
 }
 ```
 
@@ -73,11 +97,11 @@ curl -X POST "https://storhaug.targeter.tech/api/campaigns" \
 
 ```json
 {
-    "error": "Missing required field: source.reference_id: ..."
+    "error": "Missing required field: source.reference_id: Reference ID is required"
 }
 ```
 
-Validation errors may include a `details` array with `path` and `message` per field.
+Validation errors on auth may include a `details` array with `path` and `message` per field.
 
 ### 401 - Unauthorized
 
@@ -85,7 +109,13 @@ Missing `Authorization` header, or invalid or expired token.
 
 ```json
 {
-    "error": "Unauthorized"
+    "error": "Missing or invalid Authorization header"
+}
+```
+
+```json
+{
+    "error": "Invalid or expired token"
 }
 ```
 
@@ -104,9 +134,12 @@ Missing `Authorization` header, or invalid or expired token.
 ```json
 {
     "source": {
+        "material": [
+            "https://example.com/property-photo.jpg"
+        ],
         "name": "Ivan Bjørndals Gate 9",
         "reference_id": "123-456-789",
-        "destination_url": "https://megler.no/eiendom/123"
+        "target_url": "https://megler.no/eiendom/123"
     }
 }
 ```
@@ -116,9 +149,12 @@ Missing `Authorization` header, or invalid or expired token.
 ```json
 {
     "source": {
+        "material": [
+            "https://example.com/campaign-hero.jpg"
+        ],
         "name": "Sommerkampanje Torshov",
         "reference_id": "TORSHOV-SUMMER-01012025-123",
-        "destination_url": "https://megler.no/kontor/torshov"
+        "target_url": "https://megler.no/kontor/torshov"
     }
 }
 ```
@@ -126,6 +162,7 @@ Missing `Authorization` header, or invalid or expired token.
 ## Partner Best Practices
 
 - **Unique Reference IDs**: Use unique, meaningful reference IDs from your system to avoid conflicts
-- **Client Landing Pages**: Verify that client destination URLs are working and relevant
+- **Client Landing Pages**: Verify that client target URLs are working and relevant
+- **Image URLs**: Provide publicly accessible image URLs in `material`
 - **Error Handling**: Always check response status codes and handle errors appropriately
 - **Client Consent**: Ensure you have proper authorization to create campaigns on behalf of your clients

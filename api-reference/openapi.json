@@ -10,14 +10,8 @@
     },
     "servers": [
         {
-            "url": "https://{client_slug}.targeter.tech/api",
-            "description": "Client-specific Targeter instance",
-            "variables": {
-                "client_slug": {
-                    "description": "Unique client identifier",
-                    "default": "storhaug"
-                }
-            }
+            "url": "https://app.targeter.tech/api",
+            "description": "Targeter platform instance (your base URL is provided with your credentials)"
         }
     ],
     "security": [
@@ -47,7 +41,7 @@
                                     },
                                     "api_secret": {
                                         "type": "string",
-                                        "description": "API secret issued for your partnership",
+                                        "description": "Plain-text API secret issued for your partnership (not a bcrypt hash)",
                                         "example": "YOUR_ISSUED_PARTNER_SECRET"
                                     }
                                 }
@@ -84,11 +78,20 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request body",
+                        "description": "Invalid request payload",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                },
+                                "example": {
+                                    "error": "Invalid request payload",
+                                    "details": [
+                                        {
+                                            "path": ["api_key"],
+                                            "message": "Invalid input: expected string, received undefined"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -99,6 +102,9 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                },
+                                "example": {
+                                    "error": "Invalid API credentials"
                                 }
                             }
                         }
@@ -116,11 +122,11 @@
                 }
             }
         },
-        "/campaigns": {
+        "/campaign": {
             "post": {
                 "tags": ["Campaigns"],
                 "summary": "Create or resolve campaign from external source",
-                "description": "Submit campaign source data keyed by `reference_id`. Requires a valid Bearer token from `/auth/token`.\n\n- If a campaign already exists for `reference_id`, returns **200** with the campaign `id`.\n- If no campaign exists, the server stores context (including optional AI extraction) and returns **201** with the new campaign `id` when creation succeeds.\n",
+                "description": "Submit campaign source data keyed by `reference_id`. Requires a valid Bearer token from `/auth/token`.\n\n- If a campaign already exists for `reference_id`, returns **200** with `campaign_link`.\n- If no campaign exists, the server stores context, creates the campaign, and returns **201** with `campaign_link` and `campaign_id` when creation succeeds.\n",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -132,8 +138,20 @@
                                     "source": {
                                         "type": "object",
                                         "description": "Campaign source metadata for the client",
-                                        "required": ["name", "reference_id", "destination_url"],
+                                        "required": ["material", "name", "reference_id", "target_url"],
                                         "properties": {
+                                            "material": {
+                                                "type": "array",
+                                                "description": "Image URLs for the campaign (at least one required)",
+                                                "minItems": 1,
+                                                "items": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                },
+                                                "example": [
+                                                    "https://example.com/image1.jpg"
+                                                ]
+                                            },
                                             "name": {
                                                 "type": "string",
                                                 "description": "Campaign display name (e.g. property address)",
@@ -144,26 +162,24 @@
                                                 "description": "Your stable external id for this campaign",
                                                 "example": "CLIENT-PROP-123456"
                                             },
-                                            "destination_url": {
+                                            "target_url": {
                                                 "type": "string",
                                                 "format": "uri",
                                                 "description": "Landing page URL",
                                                 "example": "https://client-website.no/property/123"
                                             }
-                                        },
-                                        "example": {
-                                            "name": "Majorstuenveien 14",
-                                            "reference_id": "CLIENT-PROP-123456",
-                                            "destination_url": "https://client-website.no/property/123"
                                         }
                                     }
                                 }
                             },
                             "example": {
                                 "source": {
+                                    "material": [
+                                        "https://example.com/image1.jpg"
+                                    ],
                                     "name": "Majorstuenveien 14",
                                     "reference_id": "CLIENT-PROP-123456",
-                                    "destination_url": "https://client-website.no/property/123"
+                                    "target_url": "https://client-website.no/property/123"
                                 }
                             }
                         }
@@ -175,7 +191,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/CampaignCreateResponse"
+                                    "$ref": "#/components/schemas/CampaignCreateExistingResponse"
                                 }
                             }
                         }
@@ -198,7 +214,7 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "example": {
-                                    "error": "Missing required field: source.reference_id: ..."
+                                    "error": "Missing required field: source.reference_id: Reference ID is required"
                                 }
                             }
                         }
@@ -209,6 +225,18 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "missingHeader": {
+                                        "value": {
+                                            "error": "Missing or invalid Authorization header"
+                                        }
+                                    },
+                                    "invalidToken": {
+                                        "value": {
+                                            "error": "Invalid or expired token"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -227,9 +255,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/campaign": {
+            },
             "get": {
                 "tags": ["Campaigns"],
                 "summary": "Get campaign and stats",
@@ -239,7 +265,7 @@
                         "name": "id",
                         "in": "query",
                         "required": true,
-                        "description": "Campaign id returned from `POST /campaigns`",
+                        "description": "Campaign id returned from `POST /campaign`",
                         "schema": {
                             "type": "string"
                         },
@@ -253,35 +279,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/CampaignGetResponse"
-                                },
-                                "example": {
-                                    "campaign": {
-                                        "id": "AbC123xyz",
-                                        "name": "Majorstuenveien 14",
-                                        "reference_id": "CLIENT-PROP-123456",
-                                        "destination_url": "https://client-website.no/property/123",
-                                        "status": "active"
-                                    },
-                                    "stats": {
-                                        "impressions": 12500,
-                                        "clicks": 340,
-                                        "cpm": 120.0,
-                                        "cpc": 4.41,
-                                        "ctr": 0.0272,
-                                        "reach": 8200,
-                                        "frequency": 1.52,
-                                        "conversion": 28,
-                                        "cost_per_conversion": 53.57,
-                                        "video_views": {
-                                            "p25": 5469,
-                                            "p50": 4031,
-                                            "p75": 2472,
-                                            "p100": 1031
-                                        },
-                                        "from_date": "2025-01-01",
-                                        "to_date": "2025-01-31"
-                                    },
-                                    "href": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
                                 }
                             }
                         }
@@ -302,6 +299,9 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                },
+                                "example": {
+                                    "error": "Campaign not found"
                                 }
                             }
                         }
@@ -332,12 +332,30 @@
         "schemas": {
             "CampaignCreateResponse": {
                 "type": "object",
-                "required": ["id"],
+                "required": ["campaign_link", "campaign_id"],
                 "properties": {
-                    "id": {
+                    "campaign_link": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to the campaign in the Targeter app",
+                        "example": "https://app.targeter.tech/campaigns/AbC123xyz"
+                    },
+                    "campaign_id": {
                         "type": "string",
                         "description": "Campaign id (hashed id, same encoding as in app URLs)",
                         "example": "AbC123xyz"
+                    }
+                }
+            },
+            "CampaignCreateExistingResponse": {
+                "type": "object",
+                "required": ["campaign_link"],
+                "properties": {
+                    "campaign_link": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "URL to the existing campaign in the Targeter app",
+                        "example": "https://app.targeter.tech/campaigns/AbC123xyz"
                     }
                 }
             },
@@ -355,37 +373,8 @@
                         "type": "string",
                         "format": "uri",
                         "description": "URL to the campaign in the Targeter app",
-                        "example": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
+                        "example": "https://app.targeter.tech/campaigns/AbC123xyz"
                     }
-                },
-                "example": {
-                    "campaign": {
-                        "id": "AbC123xyz",
-                        "name": "Majorstuenveien 14",
-                        "reference_id": "CLIENT-PROP-123456",
-                        "destination_url": "https://client-website.no/property/123",
-                        "status": "active"
-                    },
-                    "stats": {
-                        "impressions": 12500,
-                        "clicks": 340,
-                        "cpm": 120.0,
-                        "cpc": 4.41,
-                        "ctr": 0.0272,
-                        "reach": 8200,
-                        "frequency": 1.52,
-                        "conversion": 28,
-                        "cost_per_conversion": 53.57,
-                        "video_views": {
-                            "p25": 5469,
-                            "p50": 4031,
-                            "p75": 2472,
-                            "p100": 1031
-                        },
-                        "from_date": "2025-01-01",
-                        "to_date": "2025-01-31"
-                    },
-                    "href": "https://storhaug.targeter.tech/campaigns/AbC123xyz"
                 }
             },
             "Campaign": {
@@ -428,13 +417,6 @@
                         ],
                         "example": "active"
                     }
-                },
-                "example": {
-                    "id": "AbC123xyz",
-                    "name": "Majorstuenveien 14",
-                    "reference_id": "CLIENT-PROP-123456",
-                    "destination_url": "https://client-website.no/property/123",
-                    "status": "active"
                 }
             },
             "VideoViewQuartiles": {
@@ -460,12 +442,6 @@
                         "description": "Video views at 100% completion",
                         "example": 1031
                     }
-                },
-                "example": {
-                    "p25": 5469,
-                    "p50": 4031,
-                    "p75": 2472,
-                    "p100": 1031
                 }
             },
             "CampaignStats": {
@@ -531,25 +507,6 @@
                         "description": "End date of the stats period (inclusive)",
                         "example": "2025-01-31"
                     }
-                },
-                "example": {
-                    "impressions": 12500,
-                    "clicks": 340,
-                    "cpm": 120.0,
-                    "cpc": 4.41,
-                    "ctr": 0.0272,
-                    "reach": 8200,
-                    "frequency": 1.52,
-                    "conversion": 28,
-                    "cost_per_conversion": 53.57,
-                    "video_views": {
-                        "p25": 5469,
-                        "p50": 4031,
-                        "p75": 2472,
-                        "p100": 1031
-                    },
-                    "from_date": "2025-01-01",
-                    "to_date": "2025-01-31"
                 }
             },
             "Error": {
@@ -562,7 +519,7 @@
                     },
                     "details": {
                         "type": "array",
-                        "description": "Validation issues (e.g. Zod), when returned by the server",
+                        "description": "Validation issues (Zod), when returned by the server",
                         "items": {
                             "type": "object",
                             "properties": {
